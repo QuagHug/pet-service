@@ -2,32 +2,90 @@ const mongoose = require('mongoose');
 const Joi = require('joi');
 
 const userSchema = new mongoose.Schema({
-  name: String,
-  username: { type: String, default: null },
-  email: String,
-  password: String,
-  cart: [
-    {
-      product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-      quantity: { type: Number, default: 1 },
+  name: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  favoriteServices: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ServiceProvider',
+  }],
+  clickHistory: [{
+    serviceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ServiceProvider',
     },
-  ],
-  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
-  orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    }
+  }],
+  pets: [{
+    name: String,
+    type: String,
+    breed: String,
+    age: Number,
+  }],
+  membership: {
+    status: {
+      type: String,
+      enum: ['inactive', 'active', 'expired'],
+      default: 'inactive'
+    },
+    type: {
+      type: String,
+      enum: ['free', 'premium'],
+      default: 'free'
+    },
+    startDate: Date,
+    endDate: Date
+  },
+  paymentHistory: [{
+    orderId: String,
+    amount: String,
+    status: {
+      type: String,
+      enum: ['pending', 'completed', 'failed', 'refunded'],
+      default: 'pending'
+    },
+    paymentMethod: String,
+    transactionId: String,
+    message: String,
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
-const User = mongoose.model('User', userSchema);
+// Create indexes
+userSchema.index({ email: 1 }, { unique: true });
 
 const userRegisterSchema = Joi.object({
-  name: Joi.string().min(3).max(50).required(),
+  name: Joi.string().required(),
   email: Joi.string().email().required(),
-  password: Joi.string().min(8).required(),
+  password: Joi.string().min(6).required(),
 });
 
 const userLoginSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().min(8).required(),
+  password: Joi.string().required(),
 });
+
+const User = mongoose.model('User', userSchema);
 
 module.exports = { User, userRegisterSchema, userLoginSchema };
 

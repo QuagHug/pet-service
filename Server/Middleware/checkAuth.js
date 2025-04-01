@@ -1,27 +1,49 @@
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config/jwtConfig');
 
-const checkAuth = (accessTokenSecret, refreshTokenSecret = process.env.USER_REFRESH_TOKEN_SECRET) => {
+const checkAuth = () => {
   return async (req, res, next) => {
     try {
-      const accessToken = req.headers.authorization.split(' ')[1];
-      const refreshToken = req.cookies;
-
-      if (!accessToken || !refreshToken) {
-        return res.status(401).json({ message: 'Unauthorized' });
+      console.log("\n=== CheckAuth Middleware Start ===");
+      console.log("Request path:", req.path);
+      console.log("Request method:", req.method);
+      console.log("Authorization header:", req.headers.authorization);
+      
+      if (!req.headers.authorization) {
+        console.log("No authorization header found");
+        return res.status(401).json({ message: 'No authorization header' });
       }
+
+      if (!req.headers.authorization.startsWith('Bearer ')) {
+        console.log("Invalid authorization format");
+        return res.status(401).json({ message: 'Invalid authorization format' });
+      }
+
+      const accessToken = req.headers.authorization.split(' ')[1];
+      console.log("Extracted token:", accessToken);
 
       try {
-        jwt.verify(accessToken, accessTokenSecret);
+        console.log("Attempting to verify token with JWT_SECRET");
+        const decoded = jwt.verify(accessToken, JWT_SECRET);
+        console.log("Token decoded successfully:", decoded);
+        
+        req.user = decoded;
+        console.log("User attached to request:", req.user);
+        console.log("=== CheckAuth Middleware Success ===\n");
         next();
-      } catch (error) {
-        const refreshDecoded = await jwt.verify(refreshToken, refreshTokenSecret);
-        req.accessToken = jwt.sign({ email: refreshDecoded.email }, accessTokenSecret, {
-          expiresIn: '10m',
+      } catch (jwtError) {
+        console.error("JWT verification failed:", jwtError.message);
+        return res.status(401).json({ 
+          message: 'Token verification failed',
+          error: jwtError.message 
         });
-        next();
       }
     } catch (error) {
-      res.status(401).json({ message: 'Unauthorized' });
+      console.error("CheckAuth middleware error:", error);
+      res.status(401).json({ 
+        message: 'Authentication failed',
+        error: error.message 
+      });
     }
   };
 };

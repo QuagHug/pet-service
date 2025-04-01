@@ -11,14 +11,14 @@ router
   .get('/users', tryCatch(controller.getAllUsers))
   .get('/users/:id', tryCatch(controller.getUserById))
 
-  .get('/products/category', tryCatch(controller.getProductsByCategory))
-  .get('/products', tryCatch(controller.getAllProducts))
-  .get('/products/:id', tryCatch(controller.getProductById))
-  .post('/products', tryCatch(controller.createProduct))
-  .put('/products', tryCatch(controller.updateProduct))
-  .delete('/products/:id', tryCatch(controller.deleteProduct))
+  .get('/services/category', tryCatch(controller.getServicesByCategory))
+  .get('/services', tryCatch(controller.getAllServices))
+  .get('/services/:id', tryCatch(controller.getServiceById))
+  .post('/services', tryCatch(controller.createService))
+  .put('/services', tryCatch(controller.updateService))
+  .delete('/services/:id', tryCatch(controller.deleteService))
 
   .get('/stats', tryCatch(controller.getStats))
-  .get('/orders', tryCatch(controller.getOrders));
+  .get('/clicks', tryCatch(controller.getAffiliateClicks));
 
 module.exports = router;

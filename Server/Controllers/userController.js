@@ -5,62 +5,138 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { JWT_SECRET } = require('../config/jwtConfig');
 let orderDetails = {};
 
-module.exports = {
+const userController = {
   register: async (req, res) => {
-    const { error, value } = userRegisterSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
+    try {
+      console.log("\n=== Register Attempt ===");
+      const { name, email, password, pets } = req.body;
+      console.log("Email:", email);
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        console.log("User already exists");
+        return res.status(400).json({
+          status: 'failure',
+          message: 'User with this email already exists'
+        });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      console.log("Password hashed");
+
+      // Create new user
+      const newUser = new User({
+        name,
+        email,
+        password: hashedPassword,
+        pets: pets || [],
+        favoriteServices: [],
+        clickHistory: [],
+        membership: {
+          status: 'inactive',
+          type: 'free',
+          startDate: null,
+          endDate: null
+        },
+        paymentHistory: []
+      });
+
+      // Save user to database
+      await newUser.save();
+      console.log("User saved to database");
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: newUser._id, email: newUser.email },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      console.log("Token generated");
+      console.log("=== Register Success ===\n");
+
+      res.status(201).json({
+        status: 'success',
+        message: 'User registered successfully',
+        token,
+        data: {
+          _id: newUser._id,
+          name: newUser.name,
+          email: newUser.email
+        }
+      });
+    } catch (error) {
+      console.error('Register error:', error);
+      res.status(500).json({
+        status: 'failure',
+        message: 'Error registering user',
+        error: error.message
+      });
     }
-
-    const { name, email, password } = value;
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email is already registered.' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await User.create({ name, email, password: hashedPassword });
-
-    res.status(201).json({
-      status: 'success',
-      message: 'Registration successful! You can now login.',
-    });
   },
 
   login: async (req, res) => {
-    const { error, value } = userLoginSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
-    }
-    const { email, password } = value;
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: 'Email not found. Please register.' });
-    }
+    try {
+      console.log("\n=== Login Attempt ===");
+      const { email, password } = req.body;
+      console.log("Email:", email);
 
-    const passwordMatch = bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      return res.status(401).json({ message: 'Incorrect Password. Try again.' });
-    }
+      // Find user by email
+      const user = await User.findOne({ email });
+      if (!user) {
+        console.log("User not found");
+        return res.status(401).json({
+          status: 'failure',
+          message: 'Invalid email or password'
+        });
+      }
+      console.log("User found:", user.email);
 
-    const accessToken = jwt.sign({ email }, process.env.USER_ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
-    const refreshToken = jwt.sign({ email }, process.env.USER_REFRESH_TOKEN_SECRET, { expiresIn: '3d' });
+      // Check password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        console.log("Invalid password");
+        return res.status(401).json({
+          status: 'failure',
+          message: 'Invalid email or password'
+        });
+      }
+      console.log("Password valid");
 
-    res
-      .status(200)
-      .cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        sameSite: 'none',
-        path: '/',
-        maxAge: 3 * 24 * 60 * 60 * 1000,
-      })
-      .json({
+      // Generate JWT token using the shared JWT_SECRET
+      console.log("Using JWT_SECRET first 5 chars:", JWT_SECRET.substring(0, 5));
+      
+      const token = jwt.sign(
+        { id: user._id, email: user.email },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+      console.log("Token generated");
+      console.log("=== Login Success ===\n");
+
+      res.status(200).json({
         status: 'success',
-        message: 'Successfully Logged In.',
-        data: { jwt_token: accessToken, name: user.name, userID: user._id },
+        message: 'Login successful',
+        token,
+        data: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          membership: user.membership
+        }
       });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({
+        status: 'failure',
+        message: 'Error logging in',
+        error: error.message
+      });
+    }
   },
 
   getAllProducts: async (req, res) => {
@@ -327,4 +403,313 @@ module.exports = {
       data: orderDetails,
     });
   },
+
+  getUserMembership: async (req, res) => {
+    const userId = req.params.id;
+    
+    try {
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Check if membership has expired
+      if (user.membership.status === 'active' && user.membership.endDate < new Date()) {
+        user.membership.status = 'expired';
+        await user.save();
+      }
+      
+      res.status(200).json({
+        status: 'success',
+        message: 'Membership fetched successfully',
+        data: {
+          membership: user.membership
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'failure',
+        message: 'Error fetching membership',
+        error: error.message
+      });
+    }
+  },
+
+  getMembership: async (req, res) => {
+    try {
+      console.log("\n=== Get Membership ===");
+      const userId = req.params.id;
+      console.log("Requested user ID:", userId);
+      console.log("Authenticated user ID:", req.user._id);
+      
+      // Check if the authenticated user is requesting their own data
+      if (req.user._id.toString() !== userId) {
+        console.log("User ID mismatch");
+        return res.status(403).json({
+          status: 'failure',
+          message: 'Unauthorized to access this user\'s data'
+        });
+      }
+
+      // Find user by ID
+      console.log("Looking up user");
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        console.log("User not found");
+        return res.status(404).json({
+          status: 'failure',
+          message: 'User not found'
+        });
+      }
+
+      console.log("User found, returning membership data");
+      console.log("Membership:", user.membership);
+      
+      res.status(200).json({
+        status: 'success',
+        data: {
+          membership: user.membership
+        }
+      });
+    } catch (error) {
+      console.error('Get membership error:', error);
+      res.status(500).json({
+        status: 'failure',
+        message: 'Error getting membership',
+        error: error.message
+      });
+    }
+  },
+
+  getFavorites: async (req, res) => {
+    try {
+      console.log("\n=== Get Favorites ===");
+      const userId = req.params.id;
+      console.log("Requested user ID:", userId);
+      console.log("Authenticated user ID:", req.user._id);
+      
+      // Check if the authenticated user is requesting their own data
+      if (req.user._id.toString() !== userId) {
+        console.log("User ID mismatch");
+        return res.status(403).json({
+          status: 'failure',
+          message: 'Unauthorized to access this user\'s data'
+        });
+      }
+
+      // Find user by ID and populate favorite services
+      console.log("Looking up user favorites");
+      const user = await User.findById(userId).populate('favoriteServices');
+      
+      if (!user) {
+        console.log("User not found");
+        return res.status(404).json({
+          status: 'failure',
+          message: 'User not found'
+        });
+      }
+
+      console.log("User found, returning favorites data");
+      console.log("Favorites count:", user.favoriteServices.length);
+      console.log("=== Get Favorites Success ===\n");
+      
+      res.status(200).json({
+        status: 'success',
+        count: user.favoriteServices.length,
+        data: user.favoriteServices
+      });
+    } catch (error) {
+      console.error('Get favorites error:', error);
+      res.status(500).json({
+        status: 'failure',
+        message: 'Error getting favorites',
+        error: error.message
+      });
+    }
+  },
+
+  addToFavorites: async (req, res) => {
+    try {
+      console.log("\n=== Add to Favorites ===");
+      const userId = req.params.id;
+      const { serviceId } = req.body;
+      console.log("Requested user ID:", userId);
+      console.log("Service ID:", serviceId);
+      console.log("Authenticated user ID:", req.user._id);
+      
+      // Check if the authenticated user is updating their own data
+      if (req.user._id.toString() !== userId) {
+        console.log("User ID mismatch");
+        return res.status(403).json({
+          status: 'failure',
+          message: 'Unauthorized to update this user\'s data'
+        });
+      }
+
+      // Find user by ID
+      console.log("Looking up user");
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        console.log("User not found");
+        return res.status(404).json({
+          status: 'failure',
+          message: 'User not found'
+        });
+      }
+
+      // Check if service is already in favorites
+      if (user.favoriteServices.includes(serviceId)) {
+        console.log("Service already in favorites");
+        return res.status(400).json({
+          status: 'failure',
+          message: 'Service already in favorites'
+        });
+      }
+
+      // Add to favorites
+      user.favoriteServices.push(serviceId);
+      await user.save();
+      console.log("Service added to favorites");
+      console.log("=== Add to Favorites Success ===\n");
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Service added to favorites',
+        data: {
+          favoriteServices: user.favoriteServices
+        }
+      });
+    } catch (error) {
+      console.error('Add to favorites error:', error);
+      res.status(500).json({
+        status: 'failure',
+        message: 'Error adding to favorites',
+        error: error.message
+      });
+    }
+  },
+
+  removeFromFavorites: async (req, res) => {
+    try {
+      console.log("\n=== Remove from Favorites ===");
+      const userId = req.params.id;
+      const serviceId = req.params.serviceId;
+      console.log("Requested user ID:", userId);
+      console.log("Service ID:", serviceId);
+      console.log("Authenticated user ID:", req.user._id);
+      
+      // Check if the authenticated user is updating their own data
+      if (req.user._id.toString() !== userId) {
+        console.log("User ID mismatch");
+        return res.status(403).json({
+          status: 'failure',
+          message: 'Unauthorized to update this user\'s data'
+        });
+      }
+
+      // Find user by ID
+      console.log("Looking up user");
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        console.log("User not found");
+        return res.status(404).json({
+          status: 'failure',
+          message: 'User not found'
+        });
+      }
+
+      // Check if service is in favorites
+      if (!user.favoriteServices.includes(serviceId)) {
+        console.log("Service not in favorites");
+        return res.status(400).json({
+          status: 'failure',
+          message: 'Service not in favorites'
+        });
+      }
+
+      // Remove from favorites
+      user.favoriteServices = user.favoriteServices.filter(id => id.toString() !== serviceId);
+      await user.save();
+      console.log("Service removed from favorites");
+      console.log("=== Remove from Favorites Success ===\n");
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Service removed from favorites',
+        data: {
+          favoriteServices: user.favoriteServices
+        }
+      });
+    } catch (error) {
+      console.error('Remove from favorites error:', error);
+      res.status(500).json({
+        status: 'failure',
+        message: 'Error removing from favorites',
+        error: error.message
+      });
+    }
+  },
+
+  updateMembership: async (req, res) => {
+    try {
+      console.log("\n=== Update Membership ===");
+      const userId = req.params.id;
+      const { status, type, startDate, endDate } = req.body;
+      console.log("Requested user ID:", userId);
+      console.log("Authenticated user ID:", req.user._id);
+      
+      // Check if the authenticated user is updating their own data
+      if (req.user._id.toString() !== userId) {
+        console.log("User ID mismatch");
+        return res.status(403).json({
+          status: 'failure',
+          message: 'Unauthorized to update this user\'s data'
+        });
+      }
+
+      // Find user by ID
+      console.log("Looking up user");
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        console.log("User not found");
+        return res.status(404).json({
+          status: 'failure',
+          message: 'User not found'
+        });
+      }
+
+      // Update membership
+      user.membership = {
+        status: status || user.membership.status,
+        type: type || user.membership.type,
+        startDate: startDate || user.membership.startDate,
+        endDate: endDate || user.membership.endDate
+      };
+      await user.save();
+      console.log("Membership updated");
+      console.log("=== Update Membership Success ===\n");
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Membership updated',
+        data: {
+          membership: user.membership
+        }
+      });
+    } catch (error) {
+      console.error('Update membership error:', error);
+      res.status(500).json({
+        status: 'failure',
+        message: 'Error updating membership',
+        error: error.message
+      });
+    }
+  }
 };
+
+module.exports = userController;
