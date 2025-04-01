@@ -1,111 +1,118 @@
 import React from 'react';
-import { MDBRow, MDBCol, MDBFooter, MDBIcon, MDBContainer } from 'mdb-react-ui-kit';
+import { MDBFooter, MDBContainer, MDBRow, MDBCol, MDBIcon } from 'mdb-react-ui-kit';
 
 export default function Footer() {
   return (
-    <>
-      <MDBFooter className="footer-color text-center text-lg-start text-white" id="contact">
-        <section className="footer-position">
-          <MDBContainer className="text-center text-md-start">
-            <MDBRow className="">
-              <MDBCol sm="8" md="8" lg="5" xl="4" className="mx-auto mb-4">
-                <h6 className="logo-footer text-uppercase mt-5 mb-4">Kitter</h6>
-                <p>
-                  If you have any question, please contact us at
-                  <br />
-                  <span>support@gmail.com</span>
-                </p>
-                <p>
-                  <MDBIcon icon="home" className="me-3" />
-                  30 Buttonwood St.Pataskala OH 43062
-                </p>
-                <p>
-                  <MDBIcon icon="phone" className="me-3" /> (+1)-6234-56-789-1011
-                </p>
-              </MDBCol>
+    <MDBFooter bgColor='light' className='text-center text-lg-start text-muted'>
+      <section className='d-flex justify-content-center justify-content-lg-between p-4 border-bottom'>
+        <div className='me-5 d-none d-lg-block'>
+          <span>Connect with us on social networks:</span>
+        </div>
 
-              <MDBCol sm="4" md="4" lg="2" xl="2" className="contact-hover text-secondary mx-auto mb-4">
-                <h6 className="text-light fw-bold mb-4 mt-5">Corporate</h6>
-                <p>
-                  <a href="#!" className="text-reset">
-                    Careers
-                  </a>
-                </p>
-                <p>
-                  <a href="#!" className="text-reset">
-                    About Us
-                  </a>
-                </p>
-                <p>
-                  <a href="#!" className="text-reset">
-                    Contact Us
-                  </a>
-                </p>
-                <p>
-                  <a href="#!" className="text-reset">
-                    FAQs
-                  </a>
-                </p>
-              </MDBCol>
+        <div>
+          <a href='#' className='me-4 text-reset'>
+            <MDBIcon fab icon="facebook-f" />
+          </a>
+          <a href='#' className='me-4 text-reset'>
+            <MDBIcon fab icon="twitter" />
+          </a>
+          <a href='#' className='me-4 text-reset'>
+            <MDBIcon fab icon="instagram" />
+          </a>
+          <a href='#' className='me-4 text-reset'>
+            <MDBIcon fab icon="linkedin" />
+          </a>
+        </div>
+      </section>
 
-              <MDBCol sm="6" md="8" lg="2" xl="2" className="contact-hover text-secondary mx-auto mb-4">
-                <h6 className="text-light fw-bold mb-4 mt-5">Information</h6>
-                <p>
-                  <a href="#!" className="text-reset">
-                    Online Store
-                  </a>
-                </p>
-                <p>
-                  <a href="#!" className="text-reset">
-                    Privacy Policy
-                  </a>
-                </p>
-                <p>
-                  <a href="#!" className="text-reset">
-                    Refund Policy
-                  </a>
-                </p>
-                <p>
-                  <a href="#!" className="text-reset">
-                    Shipping Policy
-                  </a>
-                </p>
-              </MDBCol>
+      <section className=''>
+        <MDBContainer className='text-center text-md-start mt-5'>
+          <MDBRow className='mt-3'>
+            <MDBCol md="3" lg="4" xl="3" className='mx-auto mb-4'>
+              <h6 className='text-uppercase fw-bold mb-4'>
+                <MDBIcon fas icon="paw" className="me-2" />
+                PetServices
+              </h6>
+              <p>
+                Connecting pet owners with the best local pet services. Find veterinarians, groomers, trainers, and more for your furry friends.
+              </p>
+            </MDBCol>
 
-              <MDBCol sm="6" md="4" lg="2" xl="2" className="contact-hover text-secondary mx-auto mb-md-0 mb-4">
-                <h6 className="text-light fw-bold mb-4 mt-5">Services</h6>
-                <p>
-                  <a href="#!" className="text-reset">
-                    Grooming
-                  </a>
-                </p>
-                <p>
-                  <a href="#!" className="text-reset">
-                    Positive Dog Training
-                  </a>
-                </p>
-                <p>
-                  <a href="#!" className="text-reset">
-                    Veterinary Services
-                  </a>
-                </p>
-                <p>
-                  <a href="#!" className="text-reset">
-                    Petco Insurance
-                  </a>
-                </p>
-              </MDBCol>
-            </MDBRow>
-          </MDBContainer>
-          <div className="payment d-flex justify-content-between align-items-center flex-wrap pe-5 me-5 ps-5 ms-5 pb-4">
-            <p className="text-muted">© 2023 Kitter. All rights reserved.</p>
-            <img
-              src="https://res.cloudinary.com/dmzqckfj4/image/upload/v1706504631/home%20page/azb4970ad3erjqotwlvw.png"
-              alt="Payment Methods"
-            />
-          </div>
-        </section>
-      </MDBFooter>
-    </>
+            <MDBCol md="2" lg="2" xl="2" className='mx-auto mb-4'>
+              <h6 className='text-uppercase fw-bold mb-4'>Services</h6>
+              <p>
+                <a href='#!' className='text-reset'>
+                  Veterinary
+                </a>
+              </p>
+              <p>
+                <a href='#!' className='text-reset'>
+                  Grooming
+                </a>
+              </p>
+              <p>
+                <a href='#!' className='text-reset'>
+                  Training
+                </a>
+              </p>
+              <p>
+                <a href='#!' className='text-reset'>
+                  Boarding
+                </a>
+              </p>
+            </MDBCol>
+
+            <MDBCol md="3" lg="2" xl="2" className='mx-auto mb-4'>
+              <h6 className='text-uppercase fw-bold mb-4'>Useful links</h6>
+              <p>
+                <a href='#!' className='text-reset'>
+                  About Us
+                </a>
+              </p>
+              <p>
+                <a href='#!' className='text-reset'>
+                  Partner With Us
+                </a>
+              </p>
+              <p>
+                <a href='#!' className='text-reset'>
+                  Privacy Policy
+                </a>
+              </p>
+              <p>
+                <a href='#!' className='text-reset'>
+                  Help
+                </a>
+              </p>
+            </MDBCol>
+
+            <MDBCol md="4" lg="3" xl="3" className='mx-auto mb-md-0 mb-4'>
+              <h6 className='text-uppercase fw-bold mb-4'>Contact</h6>
+              <p>
+                <MDBIcon icon="home" className="me-2" />
+                New York, NY 10012, US
+              </p>
+              <p>
+                <MDBIcon icon="envelope" className="me-3" />
+                info@petservices.com
+              </p>
+              <p>
+                <MDBIcon icon="phone" className="me-3" /> + 01 234 567 88
+              </p>
+              <p>
+                <MDBIcon icon="print" className="me-3" /> + 01 234 567 89
+              </p>
+            </MDBCol>
+          </MDBRow>
+        </MDBContainer>
+      </section>
+
+      <div className='text-center p-4' style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)' }}>
+        © {new Date().getFullYear()} Copyright:
+        <a className='text-reset fw-bold ms-1' href='#'>
+          PetServices.com
+        </a>
+      </div>
+    </MDBFooter>
   );
 }

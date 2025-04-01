@@ -1,67 +1,124 @@
-import React, { useContext } from 'react';
-import { MDBContainer } from 'mdb-react-ui-kit';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PetContext } from '../Context/Context';
-import { Input } from '../Components/Input';
-import { axios } from '../Utils/Axios';
-import Button from '../Components/Button';
+import {
+  MDBContainer,
+  MDBRow,
+  MDBCol,
+  MDBCard,
+  MDBCardBody,
+  MDBInput,
+  MDBBtn,
+  MDBIcon,
+  MDBSpinner
+} from 'mdb-react-ui-kit';
 import toast from 'react-hot-toast';
 
 function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { login, loading } = useContext(PetContext);
   const navigate = useNavigate();
-  const { setLoginStatus } = useContext(PetContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const email = e.target.email.value.trim().toLowerCase();
-    const password = e.target.password.value;
-    const loginData = { email, password };
-    const adminEmail = process.env.REACT_APP_ADMIN_EMAIL;
-
+    
     if (!email || !password) {
-      return toast.error('Enter All the Inputs');
+      toast.error('Please fill in all fields');
+      return;
     }
-
-    const endpoint = email === adminEmail ? '/api/admin/login' : '/api/users/login';
-
+    
     try {
-      const response = await axios.post(endpoint, loginData);
-      email === adminEmail
-        ? localStorage.setItem('role', 'admin')
-        : localStorage.setItem('userID', response.data.data.userID);
-
-      localStorage.setItem('name', response.data.data.name);
-      localStorage.setItem('jwt_token', response.data.data.jwt_token);
-      toast.success(response.data.message);
-      setLoginStatus(true);
-      navigate(email === adminEmail ? '/dashboard' : '/');
+      console.log("Submitting login form with email:", email);
+      const success = await login(email, password);
+      console.log("Login result:", success);
+      
+      if (success) {
+        // Verify token was stored
+        const token = localStorage.getItem('token');
+        console.log("Token after login:", token ? "Set" : "Not set");
+        
+        // Navigate to home page
+        navigate('/');
+      } else {
+        toast.error('Invalid email or password');
+      }
     } catch (error) {
-      toast.error(error.response.data.message);
+      console.error('Login error:', error);
+      toast.error('An error occurred during login');
     }
   };
 
   return (
-    <MDBContainer className="form-container">
-      <form onSubmit={handleSubmit}>
-        <h1 className="mb-3 text-black">Welcome back</h1>
-
-        <Input type="email" label="Email Address" name="email" />
-        <Input type="password" label="Password" name="password" />
-
-        <Button type="submit" className="mb-4 w-100" color="black">
-          Log in
-        </Button>
-
-        <div className="pointer text-center">
-          <p>
-            Don't have an account?{' '}
-            <span className="text-black fw-bold" onClick={() => navigate('/registration')}>
-              Register
-            </span>
-          </p>
-        </div>
-      </form>
+    <MDBContainer className="my-5">
+      <MDBRow className="justify-content-center">
+        <MDBCol md="6">
+          <MDBCard>
+            <MDBCardBody className="p-5">
+              <div className="text-center mb-5">
+                <MDBIcon fas icon="paw" size="3x" className="text-primary mb-3" />
+                <h2 className="fw-bold">Login to Pet Services</h2>
+                <p className="text-muted">Access your account to find the best pet services</p>
+              </div>
+              
+              <form onSubmit={handleSubmit}>
+                <MDBInput
+                  wrapperClass="mb-4"
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                
+                <MDBInput
+                  wrapperClass="mb-4"
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                
+                <div className="d-flex justify-content-between mb-4">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="rememberMe"
+                    />
+                    <label className="form-check-label" htmlFor="rememberMe">
+                      Remember me
+                    </label>
+                  </div>
+                  <a href="#!" className="text-primary">Forgot password?</a>
+                </div>
+                
+                <MDBBtn 
+                  type="submit" 
+                  color="primary" 
+                  block 
+                  className="mb-4"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <MDBSpinner size="sm" role="status" tag="span" className="me-2" />
+                  ) : (
+                    <MDBIcon fas icon="sign-in-alt" className="me-2" />
+                  )}
+                  Login
+                </MDBBtn>
+              </form>
+              
+              <div className="text-center">
+                <p>
+                  Don't have an account? <a href="/register" className="text-primary">Register</a>
+                </p>
+              </div>
+            </MDBCardBody>
+          </MDBCard>
+        </MDBCol>
+      </MDBRow>
     </MDBContainer>
   );
 }
