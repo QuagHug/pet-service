@@ -11,7 +11,7 @@ const PARTNER_CODE = process.env.PARTNER_CODE || 'MOMOBKUN20180529';
 const ACCESS_KEY = process.env.ACCESS_KEY || 'klm05TvNBzhg7h7j';
 const SECRET_KEY = process.env.SECRET_KEY || 'at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa';
 const RETURN_URL = process.env.RETURN_URL || 'http://localhost:3000/payment/success';
-const NOTIFY_URL = process.env.NOTIFY_URL || 'https://088b-222-254-188-246.ngrok-free.app/payment/momo/notify';
+const NOTIFY_URL = process.env.NOTIFY_URL || 'https://e930-2401-d800-be4-50e-a5ab-353e-1f40-df7.ngrok-free.app/payment/momo/notify';
 const REQUEST_TYPE = 'payWithATM';
 
 const momoPaymentController = {
